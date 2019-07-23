@@ -1,0 +1,77 @@
+version: '3'
+services:
+  #Nginx Service
+  pmmdata:
+    image: percona/pmm-server
+    entrypoint: /bin/true
+    restart: "no"
+    volumes:
+      - sync_promotheus:/opt/prometheus/data
+      - sync_consul:/opt/consul-data
+      - sync_mysql:/var/lib/mysql
+      - sync_grafana:/var/lib/grafana
+    networks:
+      - pmm-network
+
+  pmmserver:
+    image: percona/pmm-server
+    restart: always
+    depends_on:
+      - pmmdata
+    ports:
+      - "8001:80"
+      - "8002:443"
+    volumes:
+      - sync_promotheus:/opt/prometheus/data
+      - sync_consul:/opt/consul-data
+      - sync_mysql:/var/lib/mysql
+      - sync_grafana:/var/lib/grafana
+    environment:
+      - METRICS_RETENTION=720h
+      - METRICS_MEMORY=262144
+      - METRICS_RESOLUTION=1s
+      - QUERIES_RETENTION=8
+      - ORCHESTRATOR_USER=orc_client_user
+      - ORCHESTRATOR_PASSWORD=orc_client_password
+      - SERVER_USER=pmm
+      - SERVER_PASSWORD=
+    networks:
+      - pmm-network
+
+  pmmclient:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    environment:
+      - PMM_SERVER=pmmserver
+      - SERVER_USER=pmm
+      - SERVER_PASSWORD=
+      - DB_HOST
+      - DB_USER
+      - DB_PASSWORD
+      - DB_TYPE
+    tty: true
+    depends_on:
+      - pmmserver
+    links:
+      - pmmserver
+    networks:
+      - pmm-network
+
+volumes:
+  sync_promotheus:
+    driver: local
+  sync_consul:
+    driver: local
+  sync_mysql:
+    driver: local
+  sync_grafana:
+    driver: local
+
+#Docker Networks
+networks:
+  pmm-network:
+    driver: bridge
