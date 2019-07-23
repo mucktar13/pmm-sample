@@ -17,6 +17,10 @@ To stop docker containers
 ```sh
 $ docker-compose down
 ```
+To run pmmclient with interactive shell
+```sh
+docker-compose run --rm pmmclient
+```
 
 Go to http://localhost:8001/ to see percona dashboard
 

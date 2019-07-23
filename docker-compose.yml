@@ -42,6 +42,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: pmmclient
     restart: unless-stopped
     stdin_open: true
     tty: true
